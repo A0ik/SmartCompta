@@ -2,7 +2,7 @@ import Stripe from 'stripe';
 
 // Initialiser Stripe (sera undefined si la clé n'est pas configurée)
 const stripe = process.env.STRIPE_SECRET_KEY 
-  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-11-20.acacia' })
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
   : null;
 
 interface PaymentLinkResult {
