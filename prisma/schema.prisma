@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Table des dossiers clients (200+ entreprises)
+model Client {
+  id              String    @id @default(cuid())
+  numDossier      String    @unique // Numéro unique du dossier (indexé)
+  raisonSociale   String    // Nom de la société
+  adresse         String?   // Adresse complète
+  siret           String?   // Numéro SIRET
+  codeNaf         String?   // Code NAF/APE
+  centre          String?   // Centre de gestion
+  periode         String?   // Période comptable
+  domaineActivite String?   // Domaine d'activité
+  emailContact    String?   // Email de contact (optionnel)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  factures        Facture[] // Relation avec les factures
+
+  @@index([numDossier])
+  @@index([raisonSociale])
+}
+
+// Table des factures
+model Facture {
+  id                String   @id @default(cuid())
+  numeroSequentiel  Int      // Numéro séquentiel auto-incrémenté
+  prefixe           String   @default("FA-2026-") // Préfixe de la facture
+  numeroComplet     String   // Numéro complet formaté (FA-2026-0001)
+  date              DateTime @default(now())
+  prestation        String   // Description de la prestation
+  montantHT         Float    // Montant hors taxes
+  tauxTVA           Float    @default(20.0) // Taux de TVA (20%)
+  montantTVA        Float    // Montant de la TVA
+  montantTTC        Float    // Montant toutes taxes comprises
+  stripePaymentLink String?  // URL du lien de paiement Stripe
+  stripePaymentId   String?  // ID du paiement Stripe
+  statut            String   @default("EN_ATTENTE") // EN_ATTENTE, PAYEE, ANNULEE
+  clientId          String   // Relation avec le client
+  client            Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([numeroSequentiel])
+  @@index([clientId])
+  @@index([statut])
+}
+
+// Table de séquence pour garantir l'unicité des numéros de facture
+model Sequence {
+  id            String @id @default("FACTURE_SEQ")
+  dernierNumero Int    @default(0) // Dernier numéro utilisé
+  annee         Int    @default(2026) // Année en cours
+  updatedAt     DateTime @updatedAt
+}
