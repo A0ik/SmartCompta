@@ -1,44 +1,5 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-import { useMemo } from 'react';
-
-// Import dynamique pour éviter les erreurs SSR
-const PDFViewer = dynamic(
-  () => import('@react-pdf/renderer').then((mod) => mod.PDFViewer),
-  { ssr: false, loading: () => <div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-2 border-black border-t-transparent" /></div> }
-);
-
-const Document = dynamic(
-  () => import('@react-pdf/renderer').then((mod) => mod.Document),
-  { ssr: false }
-);
-
-const Page = dynamic(
-  () => import('@react-pdf/renderer').then((mod) => mod.Page),
-  { ssr: false }
-);
-
-const Text = dynamic(
-  () => import('@react-pdf/renderer').then((mod) => mod.Text),
-  { ssr: false }
-);
-
-const View = dynamic(
-  () => import('@react-pdf/renderer').then((mod) => mod.View),
-  { ssr: false }
-);
-
-const Link = dynamic(
-  () => import('@react-pdf/renderer').then((mod) => mod.Link),
-  { ssr: false }
-);
-
-const StyleSheet = dynamic(
-  () => import('@react-pdf/renderer').then((mod) => mod.StyleSheet),
-  { ssr: false }
-);
-
 interface FactureData {
   numeroComplet: string;
   date: Date;
@@ -109,53 +70,64 @@ export default function FacturePreview({ facture, cabinet = defaultCabinet }: Fa
     );
   }
 
-  // Prévisualisation HTML stylisée (plus fiable que @react-pdf/renderer en preview)
+  // Prévisualisation HTML stylisée (format A4)
   return (
-    <div className="h-full overflow-auto bg-gray-100 p-6">
-      <div className="max-w-[595px] mx-auto bg-white shadow-xl" style={{ minHeight: '842px' }}>
-        <div className="p-12">
+    <div className="h-full overflow-auto bg-gray-100 p-4">
+      <div 
+        className="mx-auto bg-white shadow-xl relative"
+        style={{ 
+          width: '100%',
+          maxWidth: '595px',
+          minHeight: '842px',
+        }}
+      >
+        <div className="p-8 md:p-12">
           {/* Header */}
-          <div className="flex justify-between items-start pb-6 border-b-2 border-black mb-8">
-            <div>
-              <h1 className="text-xl font-bold text-black mb-2">{cabinet.nom}</h1>
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pb-6 border-b-2 border-black mb-8">
+            <div className="flex-1">
+              <h1 className="text-lg md:text-xl font-bold text-black mb-2">{cabinet.nom}</h1>
               <p className="text-xs text-gray-600 leading-relaxed">
-                {cabinet.adresse}<br />
-                SIRET: {cabinet.siret}<br />
-                {cabinet.email} | {cabinet.telephone}
+                {cabinet.adresse}
+                <br />SIRET: {cabinet.siret}
+                <br />{cabinet.email} | {cabinet.telephone}
               </p>
             </div>
-            <div className="text-right">
-              <h2 className="text-3xl font-bold tracking-widest text-black">FACTURE</h2>
-              <p className="text-sm text-gray-600 mt-2">{facture.numeroComplet}</p>
+            <div className="text-left sm:text-right">
+              <h2 className="text-2xl md:text-3xl font-bold tracking-widest text-black">FACTURE</h2>
+              <p className="text-sm text-gray-600 mt-2 font-mono">{facture.numeroComplet}</p>
               <p className="text-xs text-gray-500 mt-1">{formatDate(facture.date)}</p>
             </div>
           </div>
 
           {/* Client */}
-          <div className="bg-gray-100 rounded p-5 mb-8">
+          <div className="bg-gray-100 rounded p-4 md:p-5 mb-8">
             <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Facturer à</p>
             <p className="font-bold text-black mb-1">{facture.client.raisonSociale}</p>
             <p className="text-sm text-gray-700">
-              Dossier: {facture.client.numDossier}
+              Dossier: <span className="font-mono">{facture.client.numDossier}</span>
               {facture.client.adresse && <><br />{facture.client.adresse}</>}
               {facture.client.siret && <><br />SIRET: {facture.client.siret}</>}
             </p>
           </div>
 
           {/* Table */}
-          <div className="mb-8">
-            <div className="flex bg-black text-white text-xs font-bold uppercase tracking-wider">
-              <div className="flex-[3] p-3">Description</div>
-              <div className="flex-1 p-3 text-right">Montant HT</div>
-            </div>
-            <div className="flex border-b border-gray-200">
-              <div className="flex-[3] p-3 text-sm text-gray-700">{facture.prestation}</div>
-              <div className="flex-1 p-3 text-sm text-gray-700 text-right">{formatMontant(facture.montantHT)}</div>
+          <div className="mb-8 overflow-x-auto">
+            <div className="min-w-full">
+              <div className="flex bg-black text-white text-xs font-bold uppercase tracking-wider">
+                <div className="flex-[3] p-3">Description</div>
+                <div className="flex-1 p-3 text-right">Montant HT</div>
+              </div>
+              <div className="flex border-b border-gray-200">
+                <div className="flex-[3] p-3 text-sm text-gray-700">{facture.prestation}</div>
+                <div className="flex-1 p-3 text-sm text-gray-700 text-right whitespace-nowrap">
+                  {formatMontant(facture.montantHT)}
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Totaux */}
-          <div className="ml-auto w-64">
+          <div className="ml-auto w-full sm:w-64">
             <div className="flex justify-between py-2 border-b border-gray-200">
               <span className="text-sm text-gray-600">Sous-total HT</span>
               <span className="text-sm font-medium">{formatMontant(facture.montantHT)}</span>
@@ -171,10 +143,11 @@ export default function FacturePreview({ facture, cabinet = defaultCabinet }: Fa
           </div>
 
           {/* Paiement */}
-          <div className="mt-10 border-2 border-black rounded p-5">
-            <h3 className="font-bold uppercase tracking-wider mb-3">Modalités de paiement</h3>
+          <div className="mt-8 md:mt-10 border-2 border-black rounded p-4 md:p-5">
+            <h3 className="font-bold uppercase tracking-wider mb-3 text-sm">Modalités de paiement</h3>
             <p className="text-sm text-gray-700 leading-relaxed">
-              Paiement à réception de facture.<br />
+              Paiement à réception de facture.
+              <br />
               En cas de retard de paiement, des pénalités de retard seront appliquées.
             </p>
             {facture.stripePaymentLink && (
@@ -182,19 +155,22 @@ export default function FacturePreview({ facture, cabinet = defaultCabinet }: Fa
                 href={facture.stripePaymentLink} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="inline-block mt-4 text-sm text-blue-600 underline hover:text-blue-800"
+                className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-black text-white text-sm font-medium rounded hover:bg-gray-800 transition-colors"
               >
-                → Payer en ligne sécurisé
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+                Payer en ligne
               </a>
             )}
           </div>
+        </div>
 
-          {/* Footer */}
-          <div className="mt-auto pt-8 text-center border-t border-gray-200 absolute bottom-8 left-12 right-12">
-            <p className="text-xs text-gray-400">
-              {cabinet.nom} • SIRET: {cabinet.siret} • Document généré automatiquement
-            </p>
-          </div>
+        {/* Footer */}
+        <div className="absolute bottom-4 left-8 right-8 text-center pt-4 border-t border-gray-200">
+          <p className="text-xs text-gray-400">
+            {cabinet.nom} • SIRET: {cabinet.siret}
+          </p>
         </div>
       </div>
     </div>
