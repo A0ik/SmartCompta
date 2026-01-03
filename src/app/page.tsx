@@ -257,7 +257,7 @@ export default function Dashboard() {
             </div>
           )}
 
-          {(step === 'editing' || (step === 'idle' && selectedClient)) && (
+          {(step === 'editing' || step === 'creating' || (step === 'idle' && selectedClient)) && (
             <FactureForm
               initialData={extractedData || undefined}
               selectedClient={selectedClient}
